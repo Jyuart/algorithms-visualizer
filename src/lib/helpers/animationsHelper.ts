@@ -1,7 +1,8 @@
+import type { SortingAnimation } from '$lib/interfaces/animation';
 import { mergeSort } from '../logic/sortingAlrogithms';
 
-function getSortAnimations(array: number[]): [number[], any[]] {
-	const animations: any[] = [];
+function getSortAnimations(array: number[]): [number[], SortingAnimation[]] {
+	const animations: SortingAnimation[] = [];
 
 	const referenceArray = array.slice();
 

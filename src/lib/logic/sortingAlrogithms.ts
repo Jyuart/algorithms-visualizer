@@ -1,8 +1,10 @@
+import type { SortingAnimation } from '$lib/interfaces/animation';
+
 function mergeSort(
 	array: number[],
 	startIndex: number,
 	endIndex: number,
-	animations: any[],
+	animations: SortingAnimation[],
 	referenceArray: number[]
 ) {
 	// When we come to the point of the array having just a single item, we stop
@@ -17,7 +19,7 @@ function mergeSort(
 	mergeSort(referenceArray, startIndex, middleIndex, animations, array);
 	mergeSort(referenceArray, middleIndex + 1, endIndex, animations, array);
 
-	merge(array, startIndex, middleIndex, endIndex, referenceArray);
+	merge(array, startIndex, middleIndex, endIndex, referenceArray, animations);
 }
 
 function merge(
@@ -25,8 +27,11 @@ function merge(
 	startIndex: number,
 	middleIndex: number,
 	endIndex: number,
-	referenceArray: number[]
+	referenceArray: number[],
+	animations: SortingAnimation[]
 ) {
+	animations.push({ type: 'ARRAY', first: startIndex, second: endIndex });
+
 	// pointers to the starts of both halves
 	let i = startIndex;
 	let j = middleIndex + 1;
@@ -35,18 +40,26 @@ function merge(
 	let k = startIndex;
 
 	while (i <= middleIndex && j <= endIndex) {
+		animations.push({ type: 'COMPARE', first: i, second: j });
+
 		if (referenceArray[i] < referenceArray[j]) {
+			animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[i] });
 			array[k++] = referenceArray[i++];
 		} else {
+			animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[j] });
 			array[k++] = referenceArray[j++];
 		}
 	}
 
 	while (i <= middleIndex) {
+		animations.push({ type: 'COMPARE', first: i, second: i });
+		animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[i] });
 		array[k++] = referenceArray[i++];
 	}
 
 	while (j <= endIndex) {
+		animations.push({ type: 'COMPARE', first: j, second: j });
+		animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[j] });
 		array[k++] = referenceArray[j++];
 	}
 }
