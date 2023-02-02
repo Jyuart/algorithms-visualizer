@@ -41,25 +41,22 @@ function merge(
 
 	while (i <= middleIndex && j <= endIndex) {
 		animations.push({ type: 'COMPARE', first: i, second: j });
-
-		if (referenceArray[i] < referenceArray[j]) {
-			animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[i] });
+		if (referenceArray[i] <= referenceArray[j]) {
+			animations.push({ type: 'PICK_MIN', first: k, second: i });
 			array[k++] = referenceArray[i++];
 		} else {
-			animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[j] });
+			animations.push({ type: 'PICK_MIN', first: k, second: j });
 			array[k++] = referenceArray[j++];
 		}
 	}
 
 	while (i <= middleIndex) {
-		animations.push({ type: 'COMPARE', first: i, second: i });
-		animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[i] });
+		animations.push({ type: 'PICK_MIN', first: k, second: i });
 		array[k++] = referenceArray[i++];
 	}
 
 	while (j <= endIndex) {
-		animations.push({ type: 'COMPARE', first: j, second: j });
-		animations.push({ type: 'PICK_MIN', first: k, second: referenceArray[j] });
+		animations.push({ type: 'PICK_MIN', first: k, second: j });
 		array[k++] = referenceArray[j++];
 	}
 }

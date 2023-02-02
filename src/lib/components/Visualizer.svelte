@@ -1,60 +1,82 @@
 <script lang="ts">
 	import { getSortAnimations } from '../helpers/animationsHelper';
 
-	const array = Array.from(Array(10).keys(), (_) => Math.floor(Math.random() * 25 + 5));
+	let array = Array.from(Array(50).keys(), (_) => Math.floor(Math.random() * 25 + 5));
 
-	let currentArray = Array.from({ length: array.length }, (_, index) => index);
-	let compared: number[] = [];
-	console.log(currentArray);
-	let min = -1;
+	let currentActiveArray = Array.from({ length: array.length }, (_, index) => index);
+	let activeBarIndex = -1;
+	let barsComparedIndexes: number[] = [];
 
 	function sortMerge() {
-		const [sortedArray, animations] = getSortAnimations(array.slice());
+		const [_, animations] = getSortAnimations(array.slice());
 
 		for (var i = 0; i < animations.length; i++) {
 			const currentAnimation = animations[i];
 
 			setTimeout((_: any) => {
-				compared = [];
-				console.log(currentAnimation);
-				if (currentAnimation.type == 'ARRAY') {
-					currentArray = [];
-					for (var i = currentAnimation.first; i <= currentAnimation.second; i++) {
-						currentArray.push(i);
-					}
-				} else if (currentAnimation.type == 'PICK_MIN') {
-					// 	let bars = document.getElementById('bars');
-					// 	let bar = bars?.childNodes.item(currentAnimation.first);
-					// 	bar.style.height = `${currentAnimation.second * 10}px`;
-					array[currentAnimation.first] = currentAnimation.second;
+				activeBarIndex = -1;
 
-					// compared.push(currentAnimation.first);
-					// compared.push(currentAnimation.second);
-					// bars?.childNodes.values[currentAnimation.first].style.height =
-					// 	array[currentAnimation.second] * 10;
-					//let myBar = allBars. .style.height = '200px'
+				if (currentAnimation.type == 'ARRAY') {
+					barsComparedIndexes = [];
+					currentActiveArray = [];
+					for (var i = currentAnimation.first; i <= currentAnimation.second; i++) {
+						currentActiveArray.push(i);
+					}
+				} else if (currentAnimation.type == 'COMPARE') {
+					barsComparedIndexes = [];
+					barsComparedIndexes.push(currentAnimation.first);
+					barsComparedIndexes.push(currentAnimation.second);
+				} else if (currentAnimation.type == 'PICK_MIN') {
+					let bars = document.getElementById('bars')?.childNodes! as NodeListOf<HTMLElement>;
+
+					for (var i = 0; i < bars.length; i++) {
+						bars[i].style.transitionProperty = 'left';
+					}
+
+					let activeBar = bars.item(currentAnimation.second);
+					activeBarIndex = currentAnimation.second;
+
+					let currentLeft = parseInt(activeBar?.style.left);
+					currentLeft = (100 / array.length) * currentAnimation.first;
+					activeBar.style.left = `${currentLeft}%`;
+					activeBar.style.zIndex = '999';
+
+					let sortedBars = [...bars].sort(
+						(a, b) => parseInt(a.style.left) - parseInt(b.style.left)
+					);
+					let barLeftValues = sortedBars.map((x) => x.style.left);
+					let allUnique = barLeftValues.length === new Set(barLeftValues).size;
+
+					if (allUnique) {
+						for (var i = 0; i < sortedBars.length; i++) {
+							sortedBars[i].style.transitionProperty = 'none';
+							array[i] = parseInt(sortedBars[i].getAttribute('data-value')!);
+						}
+					}
 				}
 			}, i * 1000);
 		}
 	}
-
-	// function setBlockColor(action: Action, index: number) {
-	// 	array = array.map((x) => {
-	// 		x.bgColor = 'black';
-	// 		return x;
-	// 	});
-	// 	array[index].bgColor = action.bgColor;
-	// }
 </script>
 
 <button on:click={sortMerge}>Merge sort</button>
-<div class="flex flex-row items-end absolute bottom-0 w-10/12 mx-20 transition-all" id="bars">
+<div class="flex flex-row items-end absolute bottom-0 w-10/12 mx-20" id="bars">
 	{#each array as item, index}
 		<div
-			class="bg-black text-white align-bottom flex-1 min-w-[1px] mr-2 text-xs rounded-t-lg transition-all"
-			style="height: {10 * item}px; opacity: {currentArray.includes(index)
-				? '1'
-				: '.2'}; background-color: {compared.includes(index) ? 'red' : 'black'}"
+			data-value={item}
+			class="bg-black text-white align-bottom absolute text-xs rounded-t-md"
+			style="
+				height: {10 * item}px; 
+				opacity: {currentActiveArray.includes(index) ? '1' : '.2'};
+				width: calc(100%/{array.length} - 5px);
+				left: {(100 / array.length) * index}%;
+				transition-property: left;
+				transition-duration: 250ms;
+				background-color: {activeBarIndex == index
+				? 'red'
+				: barsComparedIndexes.includes(index)
+				? 'green'
+				: 'black'}"
 		>
 			<p class="text-center pt-5">{item}</p>
 		</div>
