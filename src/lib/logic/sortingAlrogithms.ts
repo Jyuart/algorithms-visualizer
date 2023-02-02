@@ -51,11 +51,13 @@ function merge(
 	}
 
 	while (i <= middleIndex) {
+		animations.push({ type: 'COMPARE', first: i, second: -1 });
 		animations.push({ type: 'PICK_MIN', first: k, second: i });
 		array[k++] = referenceArray[i++];
 	}
 
 	while (j <= endIndex) {
+		animations.push({ type: 'COMPARE', first: j, second: -1 });
 		animations.push({ type: 'PICK_MIN', first: k, second: j });
 		array[k++] = referenceArray[j++];
 	}
