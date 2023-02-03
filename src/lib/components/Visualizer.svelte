@@ -1,17 +1,23 @@
 <script lang="ts">
-	import { getSortAnimations } from '../helpers/animationsHelper';
+	import {
+		MIN_ANIMATION_SPEED,
+		MAX_ANIMATION_SPEED,
+		DEFAULT_ANIMATION_SPEED
+	} from '$lib/helpers/consts';
+	import { getSortAnimations, calculateAnimationSpeed, generateArray } from '../helpers/helpers';
 
-	$: arrayLength = 50;
-	$: array = Array.from(Array(arrayLength).keys(), (_) => Math.floor(Math.random() * 25 + 5));
+	// inputs
+	let arrayLength = 50;
+	let speedInput = DEFAULT_ANIMATION_SPEED;
+	$: speed = calculateAnimationSpeed(speedInput);
 
-	$: currentActiveArray = Array.from({ length: arrayLength }, (_, index) => index);
+	// main array
+	$: array = generateArray(arrayLength);
 
-	$: speedInput = 2100;
-	$: speed = 2600 - speedInput;
-
+	// helpers for UI
+	let currentActiveArray = Array.from({ length: arrayLength }, (_, index) => index);
 	let activeBarIndex = -1;
 	let barsComparedIndexes: number[] = [];
-
 	let animationRunning = false;
 
 	function sortMerge() {
@@ -22,27 +28,28 @@
 			const currentAnimation = animations[i];
 
 			setTimeout((_: any) => {
+				// on each animation unset the active bar index to remove the color highlight
 				activeBarIndex = -1;
 
 				if (currentAnimation.type == 'ARRAY') {
 					barsComparedIndexes = [];
 					currentActiveArray = [];
 
-					let bars = document.getElementById('bars')?.childNodes! as NodeListOf<HTMLElement>;
+					let bars = getAllBars();
+
+					// elevate all the bars of the currently active array
 					for (var i = currentAnimation.first; i <= currentAnimation.second; i++) {
 						currentActiveArray.push(i);
-						bars[i].style.bottom = `${(25 * 25) / 2}px`;
+						bars[i].style.bottom = '40vh';
 					}
 				} else if (currentAnimation.type == 'COMPARE') {
 					barsComparedIndexes = [];
-					barsComparedIndexes.push(currentAnimation.first);
-					barsComparedIndexes.push(currentAnimation.second);
+					barsComparedIndexes.push(currentAnimation.first, currentAnimation.second);
 				} else if (currentAnimation.type == 'PICK_MIN') {
-					let bars = document.getElementById('bars')?.childNodes! as NodeListOf<HTMLElement>;
+					let bars = getAllBars();
 
 					for (var i = 0; i < bars.length; i++) {
 						bars[i].style.transitionProperty = 'left, bottom';
-						bars[i].style.transitionDuration = '250ms';
 					}
 
 					let activeBar = bars.item(currentAnimation.second);
@@ -53,6 +60,10 @@
 					activeBar.style.left = `${currentLeft}%`;
 					activeBar.style.bottom = '0';
 
+					// crucial step
+					// we need to sort all the bars by their updated positions
+					// if they are sorted and all the bars in their own place
+					// we need to reassign the original array to be up to date
 					let sortedBars = [...bars].sort(
 						(a, b) => parseInt(a.style.left) - parseInt(b.style.left)
 					);
@@ -61,6 +72,7 @@
 
 					if (allUnique) {
 						setTimeout((_) => {
+							// remove the 'left' transition property to omit glitch when reassigning the main array
 							for (var i = 0; i < sortedBars.length; i++) {
 								sortedBars[i].style.transitionProperty = 'bottom';
 							}
@@ -70,17 +82,22 @@
 								activeBarIndex = -1;
 								barsComparedIndexes = [];
 							}
-						}, speed / 2);
+						}, speed - 10);
 					}
 				}
 			}, i * speed);
 		}
 
+		// unblock the UI after
 		setTimeout((_: any) => {
 			animationRunning = false;
 			activeBarIndex = -1;
 			barsComparedIndexes = [];
 		}, animations.length * speed);
+	}
+
+	function getAllBars() {
+		return document.getElementById('bars')?.childNodes! as NodeListOf<HTMLElement>;
 	}
 </script>
 
@@ -90,8 +107,8 @@
 		<input
 			type="range"
 			bind:value={speedInput}
-			max="2500"
-			min="50"
+			max={MAX_ANIMATION_SPEED}
+			min={MIN_ANIMATION_SPEED}
 			disabled={animationRunning}
 			id="speed"
 			name="speed"
@@ -115,7 +132,7 @@
 				data-value={item}
 				class="bg-black text-white align-bottom absolute text-xs rounded-md"
 				style="
-				height: {(25 * item) / 2.5}px; 
+				height: {7 * item}px; 
 				opacity: {currentActiveArray.includes(index) ? '1' : '.2'};
 				width: calc(100%/{array.length} - 5px);
 				left: {(100 / array.length) * index}%;
