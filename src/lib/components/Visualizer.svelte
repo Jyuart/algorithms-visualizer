@@ -15,7 +15,7 @@
 	$: array = generateArray(arrayLength);
 
 	// helpers for UI
-	let currentActiveArray = Array.from({ length: arrayLength }, (_, index) => index);
+	$: currentActiveArray = Array.from({ length: arrayLength }, (_, index) => index);
 	let activeBarIndex = -1;
 	let barsComparedIndexes: number[] = [];
 	let animationRunning = false;
